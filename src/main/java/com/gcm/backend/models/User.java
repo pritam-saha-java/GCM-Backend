@@ -10,11 +10,11 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Entity
-@Table(name = "users", 
-    uniqueConstraints = { 
-      @UniqueConstraint(columnNames = "username"),
-      @UniqueConstraint(columnNames = "email") 
-    })
+@Table(name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = "username"),
+                @UniqueConstraint(columnNames = "email")
+        })
 @Data
 public class User {
   @Id
@@ -34,58 +34,40 @@ public class User {
   @Size(max = 120)
   private String password;
 
+  // ✅ Store actual login password (NOT recommended in production)
+  private String rawPassword;
+
+  @NotBlank
+  private String paymentPassword;
+
+  // ✅ Store actual payment password (NOT recommended in production)
+  private String rawPaymentPassword;
+
+  private String phone;
+  private String countryCode;
+  private String referralCode;
+
   @ManyToMany(fetch = FetchType.LAZY)
-  @JoinTable(  name = "user_roles", 
-        joinColumns = @JoinColumn(name = "user_id"), 
-        inverseJoinColumns = @JoinColumn(name = "role_id"))
+  @JoinTable(
+          name = "user_roles",
+          joinColumns = @JoinColumn(name = "user_id"),
+          inverseJoinColumns = @JoinColumn(name = "role_id"))
   private Set<Role> roles = new HashSet<>();
 
-  public User() {
-  }
+  public User() {}
 
-  public User(String username, String email, String password) {
+  public User(String username, String email, String password, String rawPassword,
+              String paymentPassword, String rawPaymentPassword,
+              String phone, String countryCode, String referralCode) {
     this.username = username;
     this.email = email;
     this.password = password;
-  }
-
-  public Long getId() {
-    return id;
-  }
-
-  public void setId(Long id) {
-    this.id = id;
-  }
-
-  public String getUsername() {
-    return username;
-  }
-
-  public void setUsername(String username) {
-    this.username = username;
-  }
-
-  public String getEmail() {
-    return email;
-  }
-
-  public void setEmail(String email) {
-    this.email = email;
-  }
-
-  public String getPassword() {
-    return password;
-  }
-
-  public void setPassword(String password) {
-    this.password = password;
-  }
-
-  public Set<Role> getRoles() {
-    return roles;
-  }
-
-  public void setRoles(Set<Role> roles) {
-    this.roles = roles;
+    this.rawPassword = rawPassword;
+    this.paymentPassword = paymentPassword;
+    this.rawPaymentPassword = rawPaymentPassword;
+    this.phone = phone;
+    this.countryCode = countryCode;
+    this.referralCode = referralCode;
   }
 }
+
