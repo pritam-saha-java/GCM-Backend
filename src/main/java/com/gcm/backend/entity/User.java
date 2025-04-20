@@ -1,4 +1,4 @@
-package com.gcm.backend.models;
+package com.gcm.backend.entity;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -46,6 +46,7 @@ public class User {
   private String phone;
   private String countryCode;
   private String referralCode;
+  private Double balance;
 
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
@@ -53,21 +54,5 @@ public class User {
           joinColumns = @JoinColumn(name = "user_id"),
           inverseJoinColumns = @JoinColumn(name = "role_id"))
   private Set<Role> roles = new HashSet<>();
-
-  public User() {}
-
-  public User(String username, String email, String password, String rawPassword,
-              String paymentPassword, String rawPaymentPassword,
-              String phone, String countryCode, String referralCode) {
-    this.username = username;
-    this.email = email;
-    this.password = password;
-    this.rawPassword = rawPassword;
-    this.paymentPassword = paymentPassword;
-    this.rawPaymentPassword = rawPaymentPassword;
-    this.phone = phone;
-    this.countryCode = countryCode;
-    this.referralCode = referralCode;
-  }
 }
 

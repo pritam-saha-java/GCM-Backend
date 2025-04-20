@@ -1,4 +1,4 @@
-package com.gcm.backend.models;
+package com.gcm.backend.entity;
 
 import jakarta.persistence.*;
 

@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,9 +16,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import com.gcm.backend.models.ERole;
-import com.gcm.backend.models.Role;
-import com.gcm.backend.models.User;
+import com.gcm.backend.entity.ERole;
+import com.gcm.backend.entity.Role;
+import com.gcm.backend.entity.User;
 import com.gcm.backend.payload.request.LoginRequest;
 import com.gcm.backend.payload.request.SignupRequest;
 import com.gcm.backend.payload.response.JwtResponse;
@@ -29,7 +28,7 @@ import com.gcm.backend.repository.UserRepository;
 import com.gcm.backend.security.jwt.JwtUtils;
 import com.gcm.backend.security.services.UserDetailsImpl;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -83,25 +82,26 @@ public class AuthController {
               .body(new MessageResponse("Error: Email is already in use!"));
     }
 
-    User user = new User(
-            signUpRequest.getUsername(),
-            signUpRequest.getEmail(),
-            encoder.encode(signUpRequest.getPassword()),
-            signUpRequest.getPassword(),
-            encoder.encode(signUpRequest.getPaymentPassword()),
-            signUpRequest.getPaymentPassword(),
-            signUpRequest.getPhone(),
-            signUpRequest.getCountryCode(),
-            signUpRequest.getReferralCode()
-    );
+    User user = new User();
+    user.setUsername(signUpRequest.getUsername());
+    user.setEmail(signUpRequest.getEmail());
+    user.setPassword(encoder.encode(signUpRequest.getPassword()));
+    user.setRawPassword(signUpRequest.getPassword());
+    user.setPaymentPassword(encoder.encode(signUpRequest.getPaymentPassword()));
+    user.setRawPaymentPassword(signUpRequest.getPaymentPassword());
+    user.setPhone(signUpRequest.getPhone());
+    user.setCountryCode(signUpRequest.getCountryCode());
+    user.setReferralCode(signUpRequest.getReferralCode());
+    user.setBalance(10.00);
 
     Set<Role> roles = new HashSet<>();
     Role userRole = roleRepository.findByName(ERole.ROLE_USER)
             .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
     roles.add(userRole);
-
     user.setRoles(roles);
+
     userRepository.save(user);
+
     return new ResponseEntity<>("User registered successfully!", HttpStatus.CREATED);
 
   }
