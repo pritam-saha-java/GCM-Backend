@@ -3,7 +3,7 @@ package com.gcm.backend.controllers;
 import com.gcm.backend.entity.CoinsEntity;
 import com.gcm.backend.payload.request.BindWalletRequest;
 import com.gcm.backend.payload.request.DepositRequest;
-import com.gcm.backend.payload.response.DepositResponse;
+import com.gcm.backend.payload.response.PaymentResponse;
 import com.gcm.backend.payload.response.HistoricalDepositResponse;
 import com.gcm.backend.service.DepositService;
 import org.springframework.http.HttpStatus;
@@ -36,7 +36,7 @@ public class DepositController {
     public ResponseEntity<?> submitDeposit(@RequestParam String userName,
                                            @ModelAttribute DepositRequest depositRequest) {
         try {
-            DepositResponse response = depositService.submitDeposit(depositRequest, userName);
+            PaymentResponse response = depositService.submitDeposit(depositRequest, userName);
             return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(Map.of("error", e.getMessage()), HttpStatus.BAD_REQUEST);

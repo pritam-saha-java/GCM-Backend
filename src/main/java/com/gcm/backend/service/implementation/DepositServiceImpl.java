@@ -7,7 +7,7 @@ import com.gcm.backend.entity.UserCurrencyAddressEntity;
 import com.gcm.backend.enums.DespositStatusEnum;
 import com.gcm.backend.payload.request.BindWalletRequest;
 import com.gcm.backend.payload.request.DepositRequest;
-import com.gcm.backend.payload.response.DepositResponse;
+import com.gcm.backend.payload.response.PaymentResponse;
 import com.gcm.backend.payload.response.HistoricalDepositResponse;
 import com.gcm.backend.repository.CoinsRepository;
 import com.gcm.backend.repository.DepositRepository;
@@ -48,7 +48,7 @@ public class DepositServiceImpl implements DepositService {
     }
 
     @Override
-    public DepositResponse submitDeposit(DepositRequest request, String userName) {
+    public PaymentResponse submitDeposit(DepositRequest request, String userName) {
 
         DepositEntity deposit = new DepositEntity();
         deposit.setAmount(request.getAmount());
@@ -72,7 +72,7 @@ public class DepositServiceImpl implements DepositService {
 
         depositRepository.save(deposit);
 
-        return new DepositResponse("Deposit submitted successfully", deposit.getId());
+        return new PaymentResponse("Deposit submitted successfully", deposit.getId());
     }
 
     @Override

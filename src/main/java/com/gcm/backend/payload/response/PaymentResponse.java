@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class DepositResponse {
+public class PaymentResponse {
     private String message;
     private Long depositId;
 }
