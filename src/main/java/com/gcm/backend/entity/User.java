@@ -48,6 +48,8 @@ public class User {
   private String referralCode;
   private Double balance;
 
+  private String userReferralCode;
+
   @ManyToMany(fetch = FetchType.LAZY)
   @JoinTable(
           name = "user_roles",
