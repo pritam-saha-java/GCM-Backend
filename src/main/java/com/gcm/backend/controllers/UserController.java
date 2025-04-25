@@ -4,6 +4,7 @@ import com.gcm.backend.entity.User;
 import com.gcm.backend.payload.request.ChangePasswordRequest;
 import com.gcm.backend.payload.response.MessageResponse;
 import com.gcm.backend.payload.response.UserAffiliateResponse;
+import com.gcm.backend.payload.response.UserDashBoardResponse;
 import com.gcm.backend.repository.UserRepository;
 import com.gcm.backend.service.AffiliateService;
 import com.gcm.backend.service.UserService;
@@ -113,6 +114,16 @@ public class UserController {
         userRepository.save(user);
 
         return ResponseEntity.ok(new MessageResponse("Payment password changed successfully."));
+    }
+
+    @RequestMapping(path = "/user-dashboard", method = RequestMethod.GET)
+    public ResponseEntity<?> getUserStats(@RequestParam String username) {
+        try {
+            UserDashBoardResponse userStats = userService.getUserStats(username);
+            return new ResponseEntity<>(userStats, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(Map.of("Error", e.getMessage()), HttpStatus.BAD_REQUEST);
+        }
     }
 
 }

@@ -1,11 +1,13 @@
 package com.gcm.backend.service.implementation;
 
+import com.gcm.backend.entity.MessageEntity;
 import com.gcm.backend.entity.PackagesEntity;
 import com.gcm.backend.entity.User;
 import com.gcm.backend.entity.UserPackagesEntity;
 import com.gcm.backend.payload.response.PackageResponse;
 import com.gcm.backend.payload.response.PurchasePackageRequest;
 import com.gcm.backend.payload.response.UserPackagesResponse;
+import com.gcm.backend.repository.MessageRepository;
 import com.gcm.backend.repository.PackagesRepository;
 import com.gcm.backend.repository.UserPackagesRepository;
 import com.gcm.backend.repository.UserRepository;
@@ -13,13 +15,11 @@ import com.gcm.backend.service.PackagesService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,13 +29,16 @@ public class PackagesServiceImpl implements PackagesService {
     private final PackagesRepository packagesRepository;
     public final UserRepository userRepository;
     private final UserPackagesRepository userPackagesRepository;
+    private final MessageRepository messageRepository;
 
     public PackagesServiceImpl(PackagesRepository packagesRepository,
                                UserRepository userRepository,
-                               UserPackagesRepository userPackagesRepository) {
+                               UserPackagesRepository userPackagesRepository,
+                               MessageRepository messageRepository) {
         this.packagesRepository = packagesRepository;
         this.userRepository = userRepository;
         this.userPackagesRepository = userPackagesRepository;
+        this.messageRepository = messageRepository;
     }
 
     @Override
@@ -92,12 +95,14 @@ public class PackagesServiceImpl implements PackagesService {
         entity.setNextSettleTime(usaTime.plusHours(settleInterval).toLocalDateTime());
         entity.setSettledCount(0);
 
+        distributePackageCommission(user, packages, request.getQuantity());
+
         userPackagesRepository.save(entity);
         return true;
     }
 
     @Override
-    public List<UserPackagesResponse> getUserPackages(String userName){
+    public List<UserPackagesResponse> getUserPackages(String userName) {
         List<UserPackagesEntity> packages = userPackagesRepository.findByUserName(userName);
         if (packages.isEmpty()){
             return Collections.emptyList();
@@ -116,10 +121,50 @@ public class PackagesServiceImpl implements PackagesService {
                                             response.setContactTerm(p.getContactTerm());
                                             response.setAmount(amount);
                                         });
-                        response.setNextPay(pkg.getNextSettleTime().format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")));
+                        LocalDateTime now = LocalDateTime.now();
+                        if (pkg.getNextSettleTime().isBefore(now) || pkg.getNextSettleTime().isEqual(now)) {
+                            response.setNextPay("Completed");
+                        } else {
+                            response.setNextPay(pkg.getNextSettleTime().format(DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a")));
+                        }
                         return  response;
                     }).toList();
         }
     }
+
+    public void distributePackageCommission(User buyer, PackagesEntity pkg, int quantity) {
+        double[] commissionRates = {
+                pkg.getLevel1Bonus(),
+                pkg.getLevel2Bonus(),
+                pkg.getLevel3Bonus()
+        };
+
+        String refCode = buyer.getReferralCode();
+        int totalPrice = pkg.getContactPrice() * quantity;
+
+        for (int level = 0; level < commissionRates.length && refCode != null && !refCode.isEmpty(); level++) {
+            Optional<User> referrerOpt = userRepository.findByUserReferralCode(refCode);
+            if (referrerOpt.isEmpty()) break;
+
+            User referrer = referrerOpt.get();
+            double commission = totalPrice * (commissionRates[level] / 100);
+
+            // 💸 Add balance
+            referrer.setBalance(referrer.getBalance() + commission);
+            referrer.setCommission(referrer.getCommission() + commission);
+            userRepository.save(referrer);
+
+            // 📩 Notification message
+            MessageEntity msg = new MessageEntity();
+            msg.setUserName(referrer.getUsername());
+            msg.setMessage(String.format("%.2f USD credited to your account as level %d package purchase bonus from %s",
+                    commission, level + 1, buyer.getUsername()));
+            messageRepository.save(msg);
+
+            // ⬆ Move up the chain
+            refCode = referrer.getReferralCode();
+        }
+    }
+
 
 }

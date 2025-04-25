@@ -1,22 +1,15 @@
 package com.gcm.backend.service.implementation;
 
-import com.gcm.backend.entity.DepositEntity;
-import com.gcm.backend.entity.MessageEntity;
-import com.gcm.backend.entity.User;
-import com.gcm.backend.entity.WithdrawEntity;
+import com.gcm.backend.entity.*;
 import com.gcm.backend.enums.DespositStatusEnum;
-import com.gcm.backend.repository.DepositRepository;
-import com.gcm.backend.repository.MessageRepository;
-import com.gcm.backend.repository.UserRepository;
-import com.gcm.backend.repository.WithdrawRepository;
+import com.gcm.backend.payload.response.UserDashBoardResponse;
+import com.gcm.backend.repository.*;
 import com.gcm.backend.service.UserService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -25,15 +18,21 @@ public class UserServiceImpl implements UserService {
     private final WithdrawRepository withdrawRepository;
     private final DepositRepository depositRepository;
     private final MessageRepository messageRepository;
+    private final UserPackagesRepository userPackagesRepository;
+    private final PackagesRepository packagesRepository;
 
     public UserServiceImpl(UserRepository userRepository,
                            WithdrawRepository withdrawRepository,
                            DepositRepository depositRepository,
-                           MessageRepository messageRepository) {
+                           MessageRepository messageRepository,
+                           UserPackagesRepository userPackagesRepository,
+                           PackagesRepository packagesRepository) {
         this.userRepository = userRepository;
         this.withdrawRepository = withdrawRepository;
         this.depositRepository = depositRepository;
         this.messageRepository = messageRepository;
+        this.userPackagesRepository = userPackagesRepository;
+        this.packagesRepository = packagesRepository;
     }
 
     @Override
@@ -75,7 +74,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<String> getUserMessages(String userName){
+    public List<String> getUserMessages(String userName) {
         List<MessageEntity> messages = messageRepository.findByUserName(userName);
         if (messages.isEmpty()){
             return Collections.emptyList();
@@ -84,5 +83,56 @@ public class UserServiceImpl implements UserService {
                     .stream()
                     .map(MessageEntity::getMessage).toList();
         }
+    }
+
+    @Override
+    public UserDashBoardResponse getUserStats(String userName) {
+        User user = userRepository.findByUsername(userName)
+                .orElseThrow(() -> new RuntimeException("User Not Found"));
+
+        UserDashBoardResponse response = new UserDashBoardResponse();
+
+        List<UserPackagesEntity> userPackages = userPackagesRepository.findByUserName(userName);
+        int totalOrders = userPackages.size();
+        int activeOrders = (int) userPackages.stream()
+                .filter(p -> p.getCompletionTime() != null && p.getCompletionTime().isAfter(LocalDateTime.now()))
+                .count();
+        int expiredOrders = totalOrders - activeOrders;
+
+        double totalProfit = userPackages.stream()
+                .mapToDouble(up -> {
+                    Optional<PackagesEntity> pkgOpt = packagesRepository.findById(up.getPackageId());
+                    if (pkgOpt.isPresent()) {
+                        PackagesEntity pkg = pkgOpt.get();
+                        return (pkg.getTotalProfit() - pkg.getContactPrice()) * up.getQuantity();
+                    }
+                    return 0.0;
+                })
+                .sum();
+
+        response.setTotalProfit(String.valueOf(totalProfit));
+        response.setTotalOrders(String.valueOf(totalOrders));
+        response.setActiveOrders(String.valueOf(activeOrders));
+        response.setExpiredOrders(String.valueOf(expiredOrders));
+
+        response.setTotalCommission(user.getCommission().toString());
+
+        double deposit = depositRepository
+                .findByUserNameAndStatus(user.getUsername(), DespositStatusEnum.Approved)
+                .stream()
+                .mapToDouble(DepositEntity::getUsdAmount)
+                .sum();
+        response.setTotalDeposit(String.valueOf(deposit));
+
+        double withdraw = withdrawRepository
+                .findByUserNameAndStatus(user.getUsername(), DespositStatusEnum.Approved)
+                .stream()
+                .mapToDouble(WithdrawEntity::getAmountInUsd)
+                .sum();
+        response.setTotalWithdrawals(Double.toString(withdraw));
+
+        response.setAvailableBalance(user.getBalance().toString());
+        response.setReferralCode(user.getUserReferralCode());
+        return response;
     }
 }

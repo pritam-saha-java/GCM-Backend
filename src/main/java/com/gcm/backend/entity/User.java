@@ -47,6 +47,7 @@ public class User {
   private String countryCode;
   private String referralCode;
   private Double balance;
+  private Double commission;
 
   private String userReferralCode;
 

@@ -1,5 +1,7 @@
 package com.gcm.backend.service;
 
+import com.gcm.backend.payload.response.UserDashBoardResponse;
+
 import java.util.List;
 import java.util.Map;
 
@@ -9,4 +11,6 @@ public interface UserService {
     List<Map<String, Object>> getUserTransactionHistory(String userName);
 
     List<String> getUserMessages(String userName);
+
+    UserDashBoardResponse getUserStats(String userName);
 }

@@ -1,0 +1,57 @@
+version: '3.8'
+
+networks:
+  my-network:
+
+volumes:
+  mysql_data:
+  mysql_conf:
+  mysql_logs:
+
+services:
+  gcm:
+    image: gamingprism/gcm-backend:16_04_03
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/gcm?useSSL=true&requireSSL=true
+      - SPRING_DATASOURCE_USERNAME=gcm_user
+      - SPRING_DATASOURCE_PASSWORD=Gcm@123
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=false
+      - SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT=org.hibernate.dialect.MySQLDialect
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - my-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  mysql:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password --log-bin=mysql-bin --server-id=1 --max_connections=1000
+    environment:
+      MYSQL_ROOT_PASSWORD: Gcm@123
+      MYSQL_DATABASE: gcm
+      MYSQL_USER: gcm_user
+      MYSQL_PASSWORD: Gcm@123
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - mysql_conf:/etc/mysql/conf.d
+      - mysql_logs:/var/log/mysql
+    networks:
+      - my-network
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ugcm_user", "-pGcm@123"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped

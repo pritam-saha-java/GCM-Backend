@@ -98,6 +98,7 @@ public class AuthController {
     user.setReferralCode(signUpRequest.getReferralCode()); // This is the code user used to join
     user.setBalance(10.00); // 🎁 Welcome bonus
     user.setUserReferralCode(generateSixDigitNumber()); // 👤 This user's own code
+    user.setCommission(0D);
 
     Set<Role> roles = new HashSet<>();
     Role userRole = roleRepository.findByName(ERole.ROLE_USER)
@@ -129,6 +130,7 @@ public class AuthController {
 
       // 💰 Add balance
       referrer.setBalance(referrer.getBalance() + bonuses[level]);
+      referrer.setCommission(referrer.getCommission() + bonuses[level]);
       userRepository.save(referrer);
 
       // 📩 Notification message
