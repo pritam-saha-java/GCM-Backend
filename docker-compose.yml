@@ -10,7 +10,7 @@ volumes:
 
 services:
   gcm:
-    image: gamingprism/gcm-backend:16_04_03
+    image: gamingprism/gcm-backend:29_04_04
     ports:
       - "8080:8080"
     environment:

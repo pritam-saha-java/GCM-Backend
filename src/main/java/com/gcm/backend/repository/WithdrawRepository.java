@@ -11,4 +11,5 @@ import java.util.List;
 public interface WithdrawRepository extends CrudRepository<WithdrawEntity, Long> {
     List<WithdrawEntity> findByUserNameOrderByCreatedAtDesc (String username);
     List<WithdrawEntity> findByUserNameAndStatus(String userName, DespositStatusEnum status);
+    List<WithdrawEntity> findAllByOrderByCreatedAtDesc();
 }

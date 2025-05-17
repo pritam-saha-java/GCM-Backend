@@ -64,7 +64,14 @@ public class WebSecurityConfig {
             .cors(cors -> cors
                     .configurationSource(request -> {
                       var corsConfig = new org.springframework.web.cors.CorsConfiguration();
-                      corsConfig.setAllowedOrigins(List.of("http://localhost:5173"));
+
+                      corsConfig.setAllowedOrigins(List.of("http://localhost:5173",
+                              "http://195.85.115.148:3000",
+                              "http://195.85.115.148:8080",
+                              "https://back.gocloudmining.com",
+                              "https://admin.gocloudmining.com",
+                              "https://gocloudmining.com"));
+
                       corsConfig.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                       corsConfig.setAllowedHeaders(List.of("*"));
                       corsConfig.setAllowCredentials(true);
@@ -80,6 +87,7 @@ public class WebSecurityConfig {
           auth.requestMatchers("/api/auth/**").permitAll()
                   .requestMatchers("/api/test/**").permitAll()
                   .requestMatchers("/api/auth/admin/**").permitAll()
+                  .requestMatchers("/api/public/**").permitAll()
               .anyRequest().authenticated()
         );
     

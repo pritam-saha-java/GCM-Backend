@@ -29,7 +29,7 @@ public class PackagesController {
     }
 
     @RequestMapping(path = "/get-all", method = RequestMethod.GET)
-    public ResponseEntity<?> registerUser() {
+    public ResponseEntity<?> getAllPackages() {
         try {
             List<PackageResponse> allPackages = service.getAllPackages();
             return new ResponseEntity<>(allPackages, HttpStatus.OK);
@@ -58,7 +58,7 @@ public class PackagesController {
         }
     }
 
-    /*@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> createPackage(@ModelAttribute CreatePackageRequest request) {
         try {
             PackagesEntity pkg = new PackagesEntity();
@@ -80,5 +80,5 @@ public class PackagesController {
         } catch (Exception e) {
             return new ResponseEntity<>("Error creating package: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }*/
+    }
 }
